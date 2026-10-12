@@ -48,6 +48,9 @@ single static gate (format, lint, type checks).
   new decision record that supersedes it, not an edit in place.
 - **Plans**: `docs/plan/NNNN-short-slug.md`. A map is an index; detail belongs in
   the slice or the linked artifact.
+- **Notes**: `docs/notes/short-slug.md` — surveys, prior art, and recorded
+  measurements. A note is not a decision. If a note changes a rule, that change
+  belongs in a decision record, and the note should say which one.
 - **Licence**: AGPL-3.0-or-later. Contributions are inbound under the same
   terms; there is no CLA.
 - **Scars**: anything painful learned while building this belongs in ADR 0001's
