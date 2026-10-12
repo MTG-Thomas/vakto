@@ -38,7 +38,7 @@ single static gate (format, lint, type checks).
   (never a direct `vitest` dependency) and run against the TypeScript sources
   directly. Configuration lives in `vite.config.ts`, not in tool-specific config
   files.
-- **Coordination rules**: [ADR 0003](docs/adr/0003-coordination-lessons-from-codex-swarm.md)
+- **Coordination rules**: [ADR 0003](docs/adr/0003-coordination-lessons.md)
   is the reference for dispatch lifecycle, leases, isolation, and takeover.
   Three of its rules are easy to violate by accident: a lease gates dispatch and
   is never a lock; lanes are described by capability, never by agent product;

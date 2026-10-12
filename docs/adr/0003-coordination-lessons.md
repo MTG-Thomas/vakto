@@ -1,8 +1,19 @@
-# Coordination lessons from codex-swarm
+# Coordination lessons and external constraints
 
 Status: accepted · Date: 2026-10-12 · Refines: [ADR 0001](0001-supervisor-contract.md)
 
 ## Context
+
+Two bodies of prior art shape this project's coordination contract. The first is
+in-house: `codex-swarm`, the predecessor of this project and the ancestor of the
+transport that wakes it. The second is external: the durable-execution,
+queueing, and controller literature that has already solved most of these
+problems, usually with a name for each.
+
+This record adopts what transfers from both, and names what deliberately does
+not. Everything below is either an invariant taken from a predecessor or a
+constraint verified at its primary source; where a claim rests on secondary
+material, it says so.
 
 `codex-swarm` is the predecessor of this project: a local-first Go CLI and
 daemon that kept worker identity, ownership claims, messages, handoffs and
@@ -102,6 +113,29 @@ Each of these is the trigger to add the thing, and the reason to not add it yet.
 | Retention policy on the ledger            | Ledgers grow past what an operator will read, or replay beyond the lease horizon is needed        | Small, inspectable ledgers are a feature at this size            |
 | Postgres or a hosted store                | More than one host must share dispatch state                                                      | The ledger is deliberately single-writer, like the swarm's       |
 
+## Constraints verified at the source
+
+These are not preferences. Each one removes an option, and each is why a rule
+above reads the way it does.
+
+| Source                                     | Verified                                                                                                                                                                                                                                                                                                              | Effect on this contract                                                                                                                                                                                                                                                                                                                                  |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GitHub webhook delivery                    | Manual and API redelivery covers roughly the last three days; failed deliveries are not retried by default (automatic redelivery is an opt-in repository feature). Recommended practice is to dedupe on `(hook ID, X-GitHub-Delivery)`, verify the signature first, and make the domain operation idempotent as well. | Idempotency retention must outlive the _upstream_ replay window, not just the transport's 24-hour TTL. A redelivery can legitimately arrive after the relay has dropped the delivery, so a ledger that forgets a claim sooner than the forge can replay duplicates work. Signature verification precedes every other effect, including reading the body. |
+| Kubernetes controllers                     | Reconciliation is level-triggered; `observedGeneration` records which spec generation the status reflects; adding a finalizer does not mean the generation was reconciled; finalizers are added before external work and removed only after cleanup succeeds.                                                         | A dispatch records which board revision it acted on, so a stale decision is detectable. The in-flight marker goes on before the lane starts and comes off only after evidence is written — an ordering rule, not two independent writes.                                                                                                                 |
+| Temporal                                   | Activities are at-least-once, so external effects need stable idempotency keys. `SignalWithStart` atomically starts or signals a workflow but does **not** deduplicate independent business operations; signals need application-level operation ids.                                                                 | Transport-level deduplication is provably insufficient on its own. Our wake is a signal, so the operation id — and therefore the dedupe decision — belongs to the supervisor, which is what reconcile-from-board provides.                                                                                                                               |
+| Kleppmann, _How to do distributed locking_ | A lease cannot prevent a stale writer; correctness requires a monotonically increasing fencing token enforced by the protected resource. This is an argument from analysis rather than a standards consensus.                                                                                                         | The forge enforces no such token, so board writes cannot be fenced. Advisory claims are the only correct choice available here, and takeover must stay possible rather than being "fixed" with a stronger lock.                                                                                                                                          |
+
+Two consequences, stated plainly because both were wrong before this
+verification:
+
+1. **The 24-hour horizon was a mistake.** It matched the transport and looked
+   tidy. The correct rule is that the ledger remembers a claim at least as long
+   as any source can replay the event that produced it — the longer of the
+   transport's retention and the forge's redelivery window.
+2. **No fencing means no pretending.** Every rule that keeps the lease advisory
+   is load-bearing. A future proposal to make claims authoritative on the board
+   has to answer Kleppmann's argument first.
+
 ## References
 
 - `codex-swarm`: `AGENTS.md` (architecture invariants), `docs/design.md`
@@ -110,3 +144,10 @@ Each of these is the trigger to add the thing, and the reason to not add it yet.
   `docs/mature-go-cli-lessons.md` (borrow-now/later/avoid discipline),
   `coordinator/migrations/0001_relay.sql` and `0002_relay_quotas.sql`.
 - [ADR 0001](0001-supervisor-contract.md) — the contract this record refines.
+- GitHub: <https://docs.github.com/en/webhooks/testing-and-troubleshooting-webhooks/redelivering-webhooks>
+- Kubernetes finalizers:
+  <https://kubernetes.io/docs/concepts/overview/working-with-objects/finalizers/>
+- Kleppmann, _How to do distributed locking_:
+  <https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html>
+- Temporal, signal-with-start:
+  <https://github.com/temporalio/documentation/blob/main/docs/design-patterns/signal-with-start.mdx>
