@@ -1,0 +1,39 @@
+name: Bug report
+description: Something behaved differently from the contract.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Security issues do not belong here — see [SECURITY.md](../blob/main/SECURITY.md).
+  - type: textarea
+    id: observed
+    attributes:
+      label: What happened
+      description: |
+        Include the board state you saw, the wake record, and the ledger entry if
+        they matter. Redact tokens, hook URLs, and internal host names.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+      description: Which part of the contract says so? ADR 0001 is the reference.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: main @ abc1234
+    validations:
+      required: true
+  - type: textarea
+    id: gates
+    attributes:
+      label: Gates you ran
+      description: Output of `npm run ci`, or the commands you ran instead.
+      render: shell
+    validations:
+      required: false

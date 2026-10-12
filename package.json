@@ -1,0 +1,33 @@
+{
+  "name": "vakto",
+  "version": "0.0.0",
+  "description": "A board-driven supervisor for coding agents: watch the work, claim it, dispatch it, report evidence.",
+  "license": "AGPL-3.0-or-later",
+  "files": [
+    "dist",
+    "docs",
+    "config.example.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "scripts": {
+    "check": "vp check",
+    "test": "vp test",
+    "pack": "vp pack",
+    "ci": "npm run check && npm run test && npm run pack"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2",
+    "vite-plus": "^1.1.0"
+  },
+  "engines": {
+    "node": ">=24.11.0"
+  }
+}

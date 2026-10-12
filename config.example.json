@@ -1,0 +1,44 @@
+{
+  "$comment": "Example only. Deployment specifics live here or in a private overlay, never in the repository.",
+  "board": {
+    "provider": "github",
+    "repo": "owner/name",
+    "readyLabel": "agent:ready",
+    "projectOwner": "owner",
+    "projectNumber": 1,
+    "statusFieldId": "PVTSSF_<field-id>",
+    "statusOptions": {
+      "triage": "<option-id>",
+      "ready": "<option-id>",
+      "inProgress": "<option-id>",
+      "needsYou": "<option-id>",
+      "review": "<option-id>",
+      "done": "<option-id>"
+    }
+  },
+  "trigger": {
+    "event": "issues",
+    "action": "labeled"
+  },
+  "transport": {
+    "kind": "http-hook",
+    "endpointKey": "<deployment>",
+    "hookUrl": "https://<relay-host>/v1/hooks/<endpoint-key>/<hook-id>/<token>",
+    "retentionHours": 24,
+    "forwardTimeoutSeconds": 8
+  },
+  "lease": {
+    "ttlMinutes": 120,
+    "holder": "<host-or-seat>"
+  },
+  "authority": {
+    "repos": ["owner/name"],
+    "prMode": "ready-for-review",
+    "requireGreenChecks": true,
+    "mayMerge": false,
+    "mayChangeBoardSchema": false
+  },
+  "stop": {
+    "methods": ["disable the trigger", "revoke the transport credential", "stop the host"]
+  }
+}

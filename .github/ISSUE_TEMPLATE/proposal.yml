@@ -1,0 +1,36 @@
+name: Proposal
+description: A change in behaviour, authority, or shape.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What is hard or impossible today, and who feels it?
+    validations:
+      required: true
+  - type: textarea
+    id: shape
+    attributes:
+      label: Proposed shape
+      description: What changes, and what stays out of scope?
+    validations:
+      required: true
+  - type: dropdown
+    id: contract
+    attributes:
+      label: Does this touch ADR 0001?
+      description: State ownership, triggers, authority, leases, or idempotency.
+      options:
+        - "No"
+        - "Yes — and I expect it needs a superseding decision record"
+        - "Not sure"
+    validations:
+      required: true
+  - type: textarea
+    id: smaller
+    attributes:
+      label: Could something smaller deliver most of this?
+      description: If yes, describe it. Slice-sized changes get merged.
+    validations:
+      required: false
