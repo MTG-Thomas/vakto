@@ -38,6 +38,11 @@ single static gate (format, lint, type checks).
   (never a direct `vitest` dependency) and run against the TypeScript sources
   directly. Configuration lives in `vite.config.ts`, not in tool-specific config
   files.
+- **Coordination rules**: [ADR 0003](docs/adr/0003-coordination-lessons.md)
+  is the reference for dispatch lifecycle, leases, isolation, and takeover.
+  Three of its rules are easy to violate by accident: a lease gates dispatch and
+  is never a lock; lanes are described by capability, never by agent product;
+  and tests use a fake board and a fake lane, never a live one.
 - **Decisions**: `docs/adr/NNNN-short-slug.md`. Changing anything in ADR 0001 —
   state ownership, trigger, authority, lease semantics, idempotency — requires a
   new decision record that supersedes it, not an edit in place.
@@ -56,4 +61,8 @@ single static gate (format, lint, type checks).
 - Never invent an operating path: if the contract does not say what happens,
   that is a decision to record, not a detail to improvise.
 - Do not add a dependency, a service, or a queue without a decision record that
-  shows the simpler option failing.
+  shows the simpler option failing — and check ADR 0003's adoption triggers
+  first, since most of those additions already have a named trigger.
+- Documentation describes shipped behaviour. No examples that imply something
+  the code does not do, no command dumps, no narrative of how the project got
+  here.

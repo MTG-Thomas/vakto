@@ -1,6 +1,10 @@
 # Agent supervisor contract
 
-Status: accepted · Date: 2026-10-12
+Status: accepted · Date: 2026-10-12 · Refined by: [ADR 0003](0003-coordination-lessons.md)
+
+> ADR 0003 adopts coordination lessons from `codex-swarm` and sharpens two
+> points below: a lease gates dispatch rather than locking an item, and the board
+> and the ledger hold separate authorities without replicating each other.
 
 ## Context
 
