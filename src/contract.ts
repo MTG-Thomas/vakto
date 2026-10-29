@@ -79,11 +79,22 @@ export function deriveIdempotencyKey(work: Pick<BoardItem, "repo" | "issueNumber
   return `${work.repo}#${work.issueNumber}`;
 }
 
+/** Evaluate expiry, rejecting an invalid current date rather than permitting a new claim. */
 export function isLeaseValid(lease: Lease | undefined, now: Date): boolean {
+  const nowMs = now.getTime();
+  if (!Number.isFinite(nowMs))
+    throw new RangeError("Lease evaluation requires a valid current date");
   if (lease === undefined) return false;
   const expiresAt = Date.parse(lease.expiresAt);
   if (Number.isNaN(expiresAt)) return false;
-  return expiresAt > now.getTime();
+  // Date.parse normalizes impossible calendar dates, such as February 30.
+  const date = /^([+-]\d{6}|\d{4})-\d{2}-\d{2}(?=T)/.exec(lease.expiresAt)?.[0];
+  if (date === undefined) return false;
+  const midnight = Date.parse(`${date}T00:00:00.000Z`);
+  if (!Number.isFinite(midnight) || !new Date(midnight).toISOString().startsWith(`${date}T`)) {
+    return false;
+  }
+  return expiresAt > nowMs;
 }
 
 /**
