@@ -102,6 +102,49 @@ describe("planReconcile", () => {
   });
 });
 
+describe("lease date dispatch regressions", () => {
+  const reconcileWithFakes = (expiresAt: string, now: Date) => {
+    const fakeBoard = { read: () => item() };
+    const fakeLane = {
+      dispatches: 0,
+      dispatch() {
+        this.dispatches += 1;
+      },
+    };
+    const reconcile = () => {
+      const action = plan({ board: fakeBoard.read(), lease: lease({ expiresAt }), now });
+      if (action.kind === "claim") fakeLane.dispatch();
+      return action;
+    };
+    return { reconcile, fakeLane };
+  };
+
+  it("rejects an invalid clock before allowing dispatch, even without a lease", () => {
+    const invalidNow = new Date(Number.NaN);
+    const { reconcile, fakeLane } = reconcileWithFakes("2026-10-12T14:00:00.000Z", invalidNow);
+    expect(reconcile).toThrow(RangeError);
+    expect(fakeLane.dispatches).toBe(0);
+    expect(() => plan({ now: invalidNow })).toThrow(RangeError);
+    expect(() => isLeaseValid(undefined, invalidNow)).toThrow(RangeError);
+  });
+
+  it.each(["2027-02-29T14:00:00.000Z", "2028-02-30T14:00:00.000Z", "2027-04-31T14:00:00.000Z"])(
+    "does not let an impossible expiry %s suppress eligible work",
+    (expiresAt) => {
+      const { reconcile, fakeLane } = reconcileWithFakes(expiresAt, NOW);
+      expect(isLeaseValid(lease({ expiresAt }), NOW)).toBe(false);
+      expect(reconcile().kind).toBe("claim");
+      expect(fakeLane.dispatches).toBe(1);
+    },
+  );
+
+  it("still honours a real leap day and offset timestamps", () => {
+    expect(isLeaseValid(lease({ expiresAt: "2028-02-29T14:00:00.000Z" }), NOW)).toBe(true);
+    expect(isLeaseValid(lease({ expiresAt: "2026-10-12T14:00:00+02:00" }), NOW)).toBe(false);
+    expect(isLeaseValid(lease({ expiresAt: "2026-10-12T14:00:01+02:00" }), NOW)).toBe(true);
+  });
+});
+
 describe("isLeaseValid", () => {
   it("treats a missing or malformed lease as invalid", () => {
     expect(isLeaseValid(undefined, NOW)).toBe(false);
