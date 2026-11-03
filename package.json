@@ -21,7 +21,9 @@
     "check": "vp check",
     "test": "vp test",
     "pack": "vp pack",
-    "ci": "npm run check && npm run test && npm run pack"
+    "ci": "npm run check && npm run test && npm run pack",
+    "secret-scan": "node scripts/secret-gate.mjs",
+    "pre-pr": "npm run secret-scan"
   },
   "devDependencies": {
     "typescript": "^5.9.2",
